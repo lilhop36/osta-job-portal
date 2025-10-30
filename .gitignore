@@ -1,0 +1,45 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore environment files
+.env
+config.php
+*.log
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Ignore XAMPP files
+xampp/
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore uploaded files
+uploads/
+
+# Ignore composer files
+/vendor/
+composer.lock
+
+# Ignore node modules
+node_modules/
+
+# Ignore debug files
+*.log
+*.sql
+*.sqlite
+
+# Ignore sensitive files
+*.pem
+*.key
+*.crt
+
+# Ignore cache
+cache/
+*.cache
