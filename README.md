@@ -1,6 +1,6 @@
 # OSTA Job Portal
 
-A comprehensive recruitment management system designed to streamline the job application and hiring process for the Oganization of Southern Trade Associations (OSTA).
+A comprehensive recruitment management system designed to streamline the job application and hiring process for the Oromia Science and Technology Authority (OSTA).
 
 ## 🚀 Features
 
@@ -25,6 +25,13 @@ A comprehensive recruitment management system designed to streamline the job app
 - Comprehensive reporting
 - Security management
 - System monitoring
+
+## 👨‍💻 About Me
+
+**Abdi GR**  
+Lead Developer & Project Maintainer  
+
+I'm a passionate developer dedicated to creating efficient and user-friendly web applications. This project was developed to modernize the recruitment process for the Organization of Southern Trade Associations (OSTA).
 
 ## 🛠️ Technology Stack
 
