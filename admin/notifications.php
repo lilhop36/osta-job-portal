@@ -53,13 +53,20 @@ if ($action === 'delete' && $notification_id > 0) {
     exit();
 }
 
-// Get notifications
-$notifications = $pdo->query("
-    SELECT n.*, u.username as created_by_name 
-    FROM notifications n 
-    LEFT JOIN users u ON n.created_by = u.id 
-    ORDER BY n.created_at DESC
-")->fetchAll();
+// Get notifications with type filter
+$type_filter = $_GET['type'] ?? '';
+$query = "SELECT n.*, u.username as created_by_name 
+          FROM notifications n 
+          LEFT JOIN users u ON n.created_by = u.id ";
+$params = [];
+if ($type_filter && in_array($type_filter, ['info', 'warning', 'success', 'error'])) {
+    $query .= " WHERE n.type = ? ";
+    $params[] = $type_filter;
+}
+$query .= " ORDER BY n.created_at DESC";
+$notif_stmt = $pdo->prepare($query);
+$notif_stmt->execute($params);
+$notifications = $notif_stmt->fetchAll();
 
 // Get users for target selection
 $users = $pdo->query("
@@ -214,20 +221,13 @@ $departments = $pdo->query("
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="mb-0">Notifications</h3>
                         <div class="btn-group">
-                            <a href="notifications.php" class="btn btn-outline-secondary">
+                            <a href="notifications.php" class="btn btn-outline-secondary <?php echo !$type_filter ? 'active' : ''; ?>">
                                 <i class="bi bi-filter me-1"></i> All
                             </a>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                    Filter Type
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="notifications.php?type=info">Information</a></li>
-                                    <li><a class="dropdown-item" href="notifications.php?type=warning">Warning</a></li>
-                                    <li><a class="dropdown-item" href="notifications.php?type=success">Success</a></li>
-                                    <li><a class="dropdown-item" href="notifications.php?type=error">Error</a></li>
-                                </ul>
-                            </div>
+                            <a href="notifications.php?type=info" class="btn btn-outline-info <?php echo $type_filter === 'info' ? 'active' : ''; ?>">Info</a>
+                            <a href="notifications.php?type=warning" class="btn btn-outline-warning <?php echo $type_filter === 'warning' ? 'active' : ''; ?>">Warning</a>
+                            <a href="notifications.php?type=success" class="btn btn-outline-success <?php echo $type_filter === 'success' ? 'active' : ''; ?>">Success</a>
+                            <a href="notifications.php?type=error" class="btn btn-outline-danger <?php echo $type_filter === 'error' ? 'active' : ''; ?>">Error</a>
                         </div>
                     </div>
                     <div class="card-body">

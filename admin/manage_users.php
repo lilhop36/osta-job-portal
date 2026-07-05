@@ -9,6 +9,53 @@ require_role('admin', '../login.php');
 // Set security headers
 set_security_headers();
 
+// Handle bulk actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        $_SESSION['error_message'] = "Security token validation failed.";
+        header('Location: manage_users.php');
+        exit();
+    }
+    $bulk_action = $_POST['bulk_action'];
+    $selected_ids = $_POST['selected_users'] ?? [];
+    
+    if (empty($selected_ids)) {
+        $_SESSION['error_message'] = "No users selected.";
+        header('Location: manage_users.php');
+        exit();
+    }
+    
+    $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
+    
+    switch ($bulk_action) {
+        case 'activate':
+            $stmt = $pdo->prepare("UPDATE users SET status = 'active' WHERE id IN ($placeholders)");
+            $stmt->execute($selected_ids);
+            $_SESSION['success_message'] = count($selected_ids) . " user(s) activated.";
+            break;
+        case 'deactivate':
+            $stmt = $pdo->prepare("UPDATE users SET status = 'inactive' WHERE id IN ($placeholders)");
+            $stmt->execute($selected_ids);
+            $_SESSION['success_message'] = count($selected_ids) . " user(s) deactivated.";
+            break;
+        case 'delete':
+            $deleted = 0;
+            foreach ($selected_ids as $uid) {
+                $check = $pdo->prepare("SELECT COUNT(*) as c FROM applications WHERE user_id = ?");
+                $check->execute([$uid]);
+                if ($check->fetch()['c'] == 0) {
+                    $del = $pdo->prepare("DELETE FROM users WHERE id = ?");
+                    $del->execute([$uid]);
+                    $deleted++;
+                }
+            }
+            $_SESSION['success_message'] = "$deleted user(s) deleted. Skipped users with active applications.";
+            break;
+    }
+    header('Location: manage_users.php');
+    exit();
+}
+
 // Handle user actions
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $user_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -301,10 +348,27 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
                         </div>
                     </div>
                     <div class="card-body">
+                        <!-- Bulk Actions Bar -->
+                        <form method="POST" id="bulkForm">
+                            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                            <div class="d-flex align-items-center mb-3" id="bulkToolbar" style="display:none !important;">
+                                <span class="me-2 text-muted"><span id="selectedCount">0</span> selected</span>
+                                <select name="bulk_action" class="form-select form-select-sm w-auto me-2" required>
+                                    <option value="">-- Bulk Action --</option>
+                                    <option value="activate">Activate</option>
+                                    <option value="deactivate">Deactivate</option>
+                                    <option value="delete">Delete</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Apply bulk action to selected users?')">
+                                    <i class="fas fa-check me-1"></i> Apply
+                                </button>
+                            </div>
+
                         <div class="table-responsive">
                             <table class="table table-hover" id="usersTable">
                                 <thead>
                                     <tr>
+                                        <th><input type="checkbox" id="selectAll"></th>
                                         <th>Username</th>
                                         <th>Email</th>
                                         <th>Role</th>
@@ -317,6 +381,7 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
                                 <tbody>
                                     <?php foreach ($users as $user): ?>
                                         <tr>
+                                            <td><input type="checkbox" name="selected_users[]" value="<?php echo $user['id']; ?>" class="user-checkbox"></td>
                                             <td><?php echo htmlspecialchars($user['username']); ?></td>
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td>
@@ -355,6 +420,7 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
                                 </tbody>
                             </table>
                         </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -369,11 +435,32 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
         $(document).ready(function() {
             $('#usersTable').DataTable({
                 pageLength: 10,
-                order: [[5, 'desc']],
+                order: [[6, 'desc']],
                 columnDefs: [
-                    { targets: [0, 1, 2, 3, 4, 5, 6], orderable: true }
+                    { targets: [0], orderable: false }
                 ]
             });
+
+            // Bulk selection
+            $('#selectAll').on('change', function() {
+                $('.user-checkbox').prop('checked', this.checked);
+                updateBulkToolbar();
+            });
+            $(document).on('change', '.user-checkbox', function() {
+                updateBulkToolbar();
+                var total = $('.user-checkbox').length;
+                var checked = $('.user-checkbox:checked').length;
+                $('#selectAll').prop('checked', total === checked);
+            });
+            function updateBulkToolbar() {
+                var count = $('.user-checkbox:checked').length;
+                $('#selectedCount').text(count);
+                if (count > 0) {
+                    $('#bulkToolbar').show();
+                } else {
+                    $('#bulkToolbar').hide();
+                }
+            }
         });
     </script>
     <?php prevent_back_navigation(); ?>

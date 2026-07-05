@@ -205,8 +205,7 @@ $audit_log = $pdo->query("
                         <h3 class="mb-0">Email Settings</h3>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="">
-                            <div class="row">
+                        <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="smtp_host" class="form-label">SMTP Host *</label>
                                     <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
@@ -238,6 +237,7 @@ $audit_log = $pdo->query("
                             </div>
                         </div>
                     </div>
+                </div>
 
                     <!-- File Upload Settings -->
                     <div class="card mb-4">

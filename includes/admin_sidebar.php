@@ -15,6 +15,12 @@
         <a href="manage_departments.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'manage_departments.php' ? 'active' : '' ?>">
             <i class="fas fa-building me-2"></i> Departments
         </a>
+        <a href="audit_log.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'audit_log.php' ? 'active' : '' ?>">
+            <i class="fas fa-shield-alt me-2"></i> Audit Log
+        </a>
+        <a href="system_health.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'system_health.php' ? 'active' : '' ?>">
+            <i class="fas fa-heartbeat me-2"></i> System Health
+        </a>
         <a href="reports.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : '' ?>">
             <i class="fas fa-chart-bar me-2"></i> Reports
         </a>
