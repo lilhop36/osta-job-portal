@@ -26,8 +26,7 @@ CREATE TABLE IF NOT EXISTS departments (
     created_by INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_name (name),
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
@@ -58,13 +57,14 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_role (role),
     INDEX idx_status (status),
     INDEX idx_email (email),
-    INDEX idx_department (department_id),
-    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    INDEX idx_department (department_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Now that users exists, add FK to departments
+-- Add foreign keys after both tables exist
 ALTER TABLE departments
     ADD FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE users
+    ADD FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL;
 
 -- -----------------------------------------------------------
 -- companies (NEW — employer profiles)
