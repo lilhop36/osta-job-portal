@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version 2.0.0">
-  <img src="https://img.shields.io/badge/PHP-8.x-777BB4.svg" alt="PHP 8.x">
-  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1.svg" alt="MySQL 8.0">
-  <img src="https://img.shields.io/badge/Bootstrap-5-7952B3.svg" alt="Bootstrap 5">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/status-production%20ready-success.svg" alt="Production Ready">
+  <img src="src/homepage.png">
+  <img src="src/job.png">
+  <img src="src/app.png">
+  <img src="src/emp.png">
+  <img src="src/admin.png">
+  <img src="src/anal.png">
 </div>
 
 <br>
