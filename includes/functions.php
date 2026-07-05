@@ -57,24 +57,7 @@ if (!function_exists('log_debug')) {
     }
 }
 
-// Only define sanitize if it doesn't already exist
-if (!function_exists('sanitize')) {
-    /**
-     * Sanitize input data to prevent XSS and SQL injection
-     * 
-     * @param string $data The input string to sanitize
-     * @return string Sanitized string
-     */
-    function sanitize($data) {
-        // Remove whitespace from the beginning and end of the string
-        $data = trim($data);
-        // Remove backslashes
-        $data = stripslashes($data);
-        // Convert special characters to HTML entities
-        $data = htmlspecialchars($data, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        
-        return $data;
-    }
+// sanitize() is defined in config/database.php (canonical version with array support)
 }
 
 // Only define format_date if it doesn't already exist

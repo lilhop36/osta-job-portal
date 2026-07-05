@@ -27,7 +27,14 @@ define('SITE_URL', env('SITE_URL', 'http://localhost/osta%20job%20portal'));
 // Create singleton PDO connection via Connection class
 $pdo = Connection::getInstance()->getPdo();
 
-// Global helper for backward compatibility
+// Canonical sanitize function — trim, stripslashes, htmlspecialchars
+// Handles both strings and arrays (recursive)
 function sanitize($data) {
-    return htmlspecialchars(strip_tags(trim($data)));
+    if (is_array($data)) {
+        return array_map('sanitize', $data);
+    }
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    return $data;
 }

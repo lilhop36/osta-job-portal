@@ -14,29 +14,49 @@ $otp_display = '';
 $error = '';
 $success = '';
 
+// OTP rate limiting: max 5 attempts per 15 minutes per user
+$otp_rate_key = 'otp_verify_' . $user_id;
+if (!isset($_SESSION[$otp_rate_key])) {
+    $_SESSION[$otp_rate_key] = ['count' => 0, 'first_attempt' => time()];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
         $error = "Security token validation failed. Please try again.";
     } else {
-        $otp = trim($_POST['otp_code'] ?? '');
-
-        if (strlen($otp) !== 6 || !ctype_digit($otp)) {
-            $error = "Please enter a valid 6-digit code.";
-        } elseif (verify_otp($user_id, $otp)) {
-            mark_email_verified($user_id);
-
-            unset($_SESSION['verify_user_id'], $_SESSION['verify_email'], $_SESSION['verify_username']);
-
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['role'] = 'applicant';
-            $_SESSION['username'] = $username;
-            session_regenerate_id(true);
-
-            $_SESSION['success_message'] = "Email verified successfully! Welcome to OSTA Job Portal.";
-            header('Location: applicant/dashboard.php');
-            exit();
+        // Check rate limit
+        $rate = &$_SESSION[$otp_rate_key];
+        if ((time() - $rate['first_attempt']) > 900) {
+            // Reset after 15 minutes
+            $rate = ['count' => 0, 'first_attempt' => time()];
+        }
+        if ($rate['count'] >= 5) {
+            $error = "Too many verification attempts. Please wait 15 minutes before trying again.";
         } else {
-            $error = "Invalid or expired verification code. Please try again.";
+            $otp = trim($_POST['otp_code'] ?? '');
+
+            if (strlen($otp) !== 6 || !ctype_digit($otp)) {
+                $error = "Please enter a valid 6-digit code.";
+            } elseif (verify_otp($user_id, $otp)) {
+                // Clear rate limit on success
+                unset($_SESSION[$otp_rate_key]);
+
+                mark_email_verified($user_id);
+
+                unset($_SESSION['verify_user_id'], $_SESSION['verify_email'], $_SESSION['verify_username']);
+
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['role'] = 'applicant';
+                $_SESSION['username'] = $username;
+                session_regenerate_id(true);
+
+                $_SESSION['success_message'] = "Email verified successfully! Welcome to OSTA Job Portal.";
+                header('Location: applicant/dashboard.php');
+                exit();
+            } else {
+                $rate['count']++;
+                $error = "Invalid or expired verification code. Please try again. (" . (5 - $rate['count']) . " attempts remaining)";
+            }
         }
     }
 }

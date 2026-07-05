@@ -9,6 +9,7 @@ $is_dashboard = str_starts_with($current_path, '/osta%20job%20portal/admin/')
 if ($is_dashboard) {
     ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
 </body>
 </html>
@@ -61,6 +62,9 @@ if ($is_dashboard) {
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <!-- Custom JavaScript -->
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>

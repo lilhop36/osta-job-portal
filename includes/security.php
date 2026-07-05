@@ -290,17 +290,10 @@ function check_rate_limit($identifier, $max_attempts = 5, $time_window = 900) { 
 }
 
 /**
- * Sanitize input data
+ * Sanitize input data (delegates to canonical sanitize() in config/database.php)
  */
 function sanitize_input($data) {
-    if (is_array($data)) {
-        return array_map('sanitize_input', $data);
-    }
-    
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
-    return $data;
+    return sanitize($data);
 }
 
 /**

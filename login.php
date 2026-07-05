@@ -155,6 +155,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
                                 <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
                             </div>
+                            <div class="text-end mt-1">
+                                <a href="forgot_password.php" class="text-muted" style="font-size: 0.85rem;">
+                                    <i class="fas fa-key me-1"></i>Forgot Password?
+                                </a>
+                            </div>
                         </div>
                         <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary">
