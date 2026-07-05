@@ -1,0 +1,16 @@
+/vendor/
+composer.lock
+.env
+.vscode/
+.idea/
+*.log
+error_log
+/uploads/*
+!/uploads/.htaccess
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*.swo
+*.tmp
+*.bak
