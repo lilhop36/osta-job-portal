@@ -71,54 +71,7 @@ if ($application_id > 0) {
             </div>
 
             <!-- Main Content -->
-            <!-- Main Content -->
-            <div class="col-md-9">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="mb-0">
-                            <?php echo $application ? 'Application Details' : 'View Application'; ?>
-                        </h3>
-                        <div>
-                            <?php if ($application): ?>
-                                <a href="view_applicants.php?job_id=<?php echo $application['job_id']; ?>" 
-                                   class="btn btn-outline-secondary me-2">
-                                    <i class="fas fa-arrow-left me-1"></i> Back to Applicants
-                                </a>
-                            <?php endif; ?>
-                            <a href="dashboard.php" class="btn btn-outline-primary">
-                                <i class="fas fa-home me-1"></i> Dashboard
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($error): ?>
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                <?php echo htmlspecialchars($error); ?>
-                                <div class="mt-2">
-                                    <a href="manage_applications.php" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-arrow-left me-1"></i> Back to Applications
-                                    </a>
-                                </div>
-                            </div>
-                        <?php elseif ($application): ?>
-                            <!-- Application Details -->
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <!-- Job Information -->
-                                    <div class="application-detail">
-                                        <h5><i class="fas fa-briefcase me-2 text-primary"></i>Job Information</h5>
-                                        <div class="row">
-                                            <div class="col-sm-4"><strong>Position:</strong></div>
-                                            <div class="col-sm-8"><?php echo htmlspecialchars($application['job_title']); ?></div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-4"><strong>Department:</strong></div>
-                                            <div class="col-sm-8"><?php echo htmlspecialchars($application['department_name']); ?></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Applicant Information -->
+            <!-- Applicant Information -->
                                     <div class="application-detail">
                                         <h5><i class="fas fa-user me-2 text-success"></i>Applicant Information</h5>
                                         <div class="row mb-2">

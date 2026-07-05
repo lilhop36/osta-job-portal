@@ -11,12 +11,14 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 
 init_secure_session();
 
+// Decode URL for filesystem path resolution
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = rtrim($uri, '/') ?: '/';
+$decodedUri = urldecode($uri);
+
 // ============================================================
 // API route — serve public/api.php directly
 // ============================================================
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = rtrim($uri, '/') ?: '/';
-
 if (strpos($uri, '/osta%20job%20portal/api') === 0 || strpos($uri, '/osta job portal/api') === 0 ||
     strpos($uri, '/osta%20job%20portal/public/api') === 0 || strpos($uri, '/osta job portal/public/api') === 0) {
     require __DIR__ . '/api.php';
@@ -34,8 +36,6 @@ $router->get('/about', [App\Controllers\AboutController::class, 'index']);
 // ============================================================
 // Legacy fallback — serve existing PHP files directly
 // ============================================================
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = rtrim($uri, '/') ?: '/';
 
 // Map to filesystem
 $legacyMap = [
@@ -50,6 +50,7 @@ $legacyMap = [
     '/job-details'       => __DIR__ . '/../job_details.php',
     '/notifications'     => __DIR__ . '/../notifications.php',
     '/health'            => __DIR__ . '/../health.php',
+    '/change-password'   => __DIR__ . '/../change_password.php',
 ];
 
 if (isset($legacyMap[$uri]) && is_file($legacyMap[$uri])) {
@@ -57,8 +58,8 @@ if (isset($legacyMap[$uri]) && is_file($legacyMap[$uri])) {
     exit;
 }
 
-// Try direct file path
-$filePath = __DIR__ . '/../' . ltrim($uri, '/');
+// Try direct file path (use decoded URI for filesystem check)
+$filePath = __DIR__ . '/../' . ltrim($decodedUri, '/');
 if (is_file($filePath)) {
     require $filePath;
     exit;
