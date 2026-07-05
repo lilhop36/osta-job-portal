@@ -11,6 +11,18 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 
 init_secure_session();
 
+// ============================================================
+// API route — serve public/api.php directly
+// ============================================================
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = rtrim($uri, '/') ?: '/';
+
+if (strpos($uri, '/osta%20job%20portal/api') === 0 || strpos($uri, '/osta job portal/api') === 0 ||
+    strpos($uri, '/osta%20job%20portal/public/api') === 0 || strpos($uri, '/osta job portal/public/api') === 0) {
+    require __DIR__ . '/api.php';
+    exit;
+}
+
 $router = new Router();
 
 // ============================================================

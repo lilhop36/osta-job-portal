@@ -28,7 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $method = $request->method();
 $uri = $request->uri();
 
-// Strip /api prefix
+// Strip base path and /api prefix (handle both /api and /public/api)
+$basePrefixes = ['/osta%20job%20portal/public', '/osta job portal/public', '/osta%20job%20portal', '/osta job portal'];
+foreach ($basePrefixes as $prefix) {
+    if (strpos($uri, $prefix) === 0) {
+        $uri = substr($uri, strlen($prefix));
+        break;
+    }
+}
 $path = preg_replace('#^/api#', '', $uri);
 $path = '/' . trim($path, '/');
 

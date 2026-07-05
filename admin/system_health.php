@@ -26,16 +26,15 @@ $session_path = session_save_path();
 
 // Database info
 $db_name = $pdo->query("SELECT DATABASE()")->fetchColumn();
-$db_size = $pdo->query("SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) FROM information_schema.tables WHERE table_schema = '$db_name'")->fetchColumn();
+$db_size = $pdo->query("SELECT ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$db_name'")->fetchColumn();
 
-// Table sizes
+// Table sizes (no rows to avoid MariaDB compatibility issues)
 $tables = $pdo->query("
-    SELECT table_name AS name, 
-           ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb,
-           table_rows AS rows
-    FROM information_schema.tables 
-    WHERE table_schema = '$db_name' 
-    ORDER BY (data_length + index_length) DESC
+    SELECT TABLE_NAME AS name, 
+           ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) AS size_mb
+    FROM information_schema.TABLES 
+    WHERE TABLE_SCHEMA = '$db_name' 
+    ORDER BY DATA_LENGTH + INDEX_LENGTH DESC
 ")->fetchAll();
 
 // User counts by role
@@ -186,20 +185,19 @@ $is_maintenance = $maintenance === '1';
                 <div class="card-header"><i class="fas fa-table me-1"></i> Database Tables</div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr><th>Table</th><th>Rows</th><th>Size (MB)</th></tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($tables as $table): ?>
-                                    <tr>
-                                        <td><code><?php echo htmlspecialchars($table['name']); ?></code></td>
-                                        <td><?php echo number_format($table['rows'] ?? 0); ?></td>
-                                        <td><?php echo $table['size_mb']; ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr><th>Table</th><th>Size (MB)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($tables as $table): ?>
+                                        <tr>
+                                            <td><code><?php echo htmlspecialchars($table['name']); ?></code></td>
+                                            <td><?php echo $table['size_mb']; ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                     </div>
                 </div>
             </div>

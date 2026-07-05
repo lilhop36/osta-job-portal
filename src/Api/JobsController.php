@@ -28,15 +28,14 @@ class JobsController extends ApiController
             $where .= " AND j.department_id = ?";
             $params[] = (int) $deptId;
         }
-        if ($locationId = $this->request->query('location_id')) {
-            $where .= " AND j.location_id = ?";
-            $params[] = (int) $locationId;
+        if ($deptId = $this->request->query('department_id')) {
+            $where .= " AND j.department_id = ?";
+            $params[] = (int) $deptId;
         }
 
-        $query = "SELECT j.*, d.name as department_name, l.name as location_name
+        $query = "SELECT j.*, d.name as department_name
                   FROM jobs j 
                   LEFT JOIN departments d ON j.department_id = d.id
-                  LEFT JOIN locations l ON j.location_id = l.id
                   $where
                   ORDER BY j.created_at DESC";
 

@@ -326,17 +326,17 @@ $top_jobs = $pdo->query("
                                         <div class="progress">
                                             <div class="progress-bar bg-warning" 
                                                  role="progressbar" 
-                                                 style="width: <?php echo ($app_stats['pending_applications'] / $app_stats['total_applications']) * 100; ?>%">
+                                                  style="width: <?php echo ($app_stats['total_applications'] > 0 ? ($app_stats['pending_applications'] / $app_stats['total_applications']) * 100 : 0); ?>%">
                                                 Pending: <?php echo $app_stats['pending_applications']; ?>
                                             </div>
                                             <div class="progress-bar bg-success" 
                                                  role="progressbar" 
-                                                 style="width: <?php echo ($app_stats['shortlisted_applications'] / $app_stats['total_applications']) * 100; ?>%">
+                                                 style="width: <?php echo ($app_stats['total_applications'] > 0 ? ($app_stats['shortlisted_applications'] / $app_stats['total_applications']) * 100 : 0); ?>%">
                                                 Shortlisted: <?php echo $app_stats['shortlisted_applications']; ?>
                                             </div>
                                             <div class="progress-bar bg-danger" 
                                                  role="progressbar" 
-                                                 style="width: <?php echo ($app_stats['rejected_applications'] / $app_stats['total_applications']) * 100; ?>%">
+                                                 style="width: <?php echo ($app_stats['total_applications'] > 0 ? ($app_stats['rejected_applications'] / $app_stats['total_applications']) * 100 : 0); ?>%">
                                                 Rejected: <?php echo $app_stats['rejected_applications']; ?>
                                             </div>
                                         </div>

@@ -14,8 +14,8 @@ class Pagination
     {
         $this->perPage = max(1, $perPage);
         $this->totalItems = max(0, $totalItems);
-        $this->currentPage = max(1, min($currentPage, max(1, $this->getTotalPages())));
         $this->totalPages = max(1, (int) ceil($this->totalItems / $this->perPage));
+        $this->currentPage = max(1, min($currentPage, $this->totalPages));
     }
 
     public function getCurrentPage(): int
