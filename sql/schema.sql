@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS users (
     experience TEXT,
     department_id INT UNSIGNED,
     account_status VARCHAR(20) DEFAULT 'active',
+    api_token VARCHAR(64) NULL,
+    api_token_expires DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_role (role),
