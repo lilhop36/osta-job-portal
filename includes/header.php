@@ -19,14 +19,18 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'User';
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1a2332, #1a6b1a);">
+<a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 bg-white text-dark px-3 py-2 z-3" style="z-index:9999;">
+    Skip to main content
+</a>
+
+<nav class="navbar navbar-expand-lg navbar-dark" role="navigation" aria-label="Main navigation" style="background: linear-gradient(135deg, #1a2332, #1a6b1a);">
     <div class="container">
-        <a class="navbar-brand d-flex align-items-center fw-bold" href="<?php echo SITE_URL; ?>/index.php" style="font-size: 1.25rem;">
-            <i class="fas fa-briefcase me-2" style="color: #90EE90;"></i>
+        <a class="navbar-brand d-flex align-items-center fw-bold" href="<?php echo SITE_URL; ?>/index.php" aria-label="OSTA Jobs Home" style="font-size: 1.25rem;">
+            <i class="fas fa-briefcase me-2" style="color: #90EE90;" aria-hidden="true"></i>
             <span>OSTA</span><span style="color: #90EE90; margin-left: 2px;">Jobs</span>
         </a>
         
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation menu">
             <span class="navbar-toggler-icon"></span>
         </button>
         
