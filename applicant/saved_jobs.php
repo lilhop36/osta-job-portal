@@ -1,79 +1,115 @@
 <?php
+declare(strict_types=1);
+
 require_once __DIR__ . '/../includes/bootstrap.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-// Require applicant role
-require_role('applicant', SITE_URL . '/login.php');
+use App\Models\SavedJob;
 
-// Get saved jobs
-$stmt = $pdo->prepare("SELECT j.* FROM jobs j JOIN saved_jobs sj ON j.id = sj.job_id WHERE sj.user_id = ? ORDER BY sj.created_at DESC");
-$stmt->execute([$_SESSION['user_id']]);
-$saved_jobs = $stmt->fetchAll();
+require_role('applicant', '../login.php');
+
+$userId = (int) $_SESSION['user_id'];
+$savedModel = new SavedJob();
+
+// Handle note update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error_message'] = 'Invalid security token.';
+        header('Location: saved_jobs.php');
+        exit;
+    }
+
+    if ($_POST['action'] === 'update_note') {
+        $jobId = (int) $_POST['job_id'];
+        $notes = sanitize($_POST['notes'] ?? '');
+        $stmt = $pdo->prepare("UPDATE saved_jobs SET notes = ? WHERE user_id = ? AND job_id = ?");
+        $stmt->execute([$notes, $userId, $jobId]);
+        $_SESSION['success_message'] = 'Notes updated.';
+    } elseif ($_POST['action'] === 'remove') {
+        $jobId = (int) $_POST['job_id'];
+        $stmt = $pdo->prepare("DELETE FROM saved_jobs WHERE user_id = ? AND job_id = ?");
+        $stmt->execute([$userId, $jobId]);
+        $_SESSION['success_message'] = 'Job removed from saved list.';
+    }
+
+    header('Location: saved_jobs.php');
+    exit;
+}
+
+$savedJobs = $savedModel->getByUser($userId);
+$pageTitle = 'Saved Jobs';
 ?>
 <?php include __DIR__ . '/../includes/header.php'; ?>
 
-<div class="container mt-4">
-    <h2 class="mb-4"><i class="fas fa-bookmark me-2"></i>Saved Jobs</h2>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0"><i class="fas fa-bookmark me-2" style="color: var(--osta-green);"></i>Saved Jobs</h4>
+        <a href="dashboard.php" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Dashboard</a>
+    </div>
 
-    <?php if (empty($saved_jobs)): ?>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>You haven't saved any jobs yet.
-            <a href="<?php echo SITE_URL; ?>/jobs.php" class="alert-link">Browse jobs</a> to find opportunities.
+    <?php if (empty($savedJobs)): ?>
+        <div class="text-center py-5">
+            <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No saved jobs yet</h5>
+            <p class="text-muted">Browse jobs and click the bookmark icon to save them here.</p>
+            <a href="../jobs.php" class="btn" style="background: var(--osta-green); color: white;">Browse Jobs</a>
         </div>
     <?php else: ?>
-        <div class="list-group">
-            <?php 
-                foreach ($saved_jobs as $job): 
-                    $applied_stmt = $pdo->prepare("SELECT 1 FROM applications WHERE job_id = ? AND user_id = ?");
-                    $applied_stmt->execute([$job['id'], $_SESSION['user_id']]);
-                    $has_applied = $applied_stmt->fetch();
-                ?>
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">
-                            <a href="<?php echo SITE_URL; ?>/job_details.php?id=<?php echo $job['id']; ?>">
-                                <?php echo htmlspecialchars($job['title']); ?>
-                            </a>
-                        </h5>
-                        <small class="text-muted">
-                            Deadline: <?php echo date('M j, Y', strtotime($job['deadline'])); ?>
-                        </small>
-                    </div>
-                    <p class="mb-1">
-                        <i class="fas fa-map-marker-alt me-1"></i> 
-                        <?php echo htmlspecialchars($job['location']); ?>
-                    </p>
-                    <div class="mt-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <a href="<?php echo SITE_URL; ?>/job_details.php?id=<?php echo $job['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye me-1"></i> View Details
-                            </a>
-                            <form action="save_job.php" method="post" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
-                                <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-bookmark"></i> Remove
-                                </button>
-                            </form>
-                        </div>
-                        <?php if ($has_applied): ?>
-                            <span class="badge bg-success">
-                                <i class="fas fa-check me-1"></i> Applied
+        <div class="row g-3">
+            <?php foreach ($savedJobs as $job): ?>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0">
+                                <a href="../job_details.php?id=<?php echo $job['job_id']; ?>" class="text-decoration-none" style="color: var(--osta-dark);">
+                                    <?php echo htmlspecialchars($job['title']); ?>
+                                </a>
+                            </h6>
+                            <span class="badge bg-<?php echo match($job['employment_type'] ?? '') {
+                                'full_time' => 'success',
+                                'part_time' => 'info',
+                                'contract' => 'warning',
+                                default => 'secondary'
+                            }; ?>">
+                                <?php echo str_replace('_', ' ', ucfirst($job['employment_type'] ?? 'N/A')); ?>
                             </span>
-                        <?php else: ?>
-                            <a href="<?php echo SITE_URL; ?>/applicant/apply.php?job_id=<?php echo $job['id']; ?>" 
-                               class="btn btn-sm btn-primary">
-                                <i class="fas fa-paper-plane me-1"></i> Apply Now
-                            </a>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <div><i class="fas fa-building me-1"></i><?php echo htmlspecialchars($job['department_name'] ?? 'N/A'); ?></div>
+                            <div><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($job['location'] ?? 'N/A'); ?></div>
+                        </div>
+
+                        <?php if (!empty($job['notes'])): ?>
+                            <div class="bg-light rounded p-2 mb-2">
+                                <small class="text-muted"><i class="fas fa-sticky-note me-1"></i><?php echo htmlspecialchars($job['notes']); ?></small>
+                            </div>
                         <?php endif; ?>
+
+                        <form method="POST" class="mt-2">
+                            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                            <input type="hidden" name="action" value="update_note">
+                            <input type="hidden" name="job_id" value="<?php echo $job['job_id']; ?>">
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="notes" class="form-control" placeholder="Add a note..." value="<?php echo htmlspecialchars($job['notes'] ?? ''); ?>">
+                                <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-save"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+                        <small class="text-muted"><i class="fas fa-calendar me-1"></i><?php echo date('M d, Y', strtotime($job['deadline'])); ?></small>
+                        <form method="POST" class="d-inline" onsubmit="return confirm('Remove from saved?');">
+                            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="job_id" value="<?php echo $job['job_id']; ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
                     </div>
                 </div>
+            </div>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
-    <a href="<?php echo SITE_URL; ?>/applicant/dashboard.php" class="btn btn-secondary mt-4">
-        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-    </a>
 </div>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
-<?php prevent_back_navigation(); ?>
