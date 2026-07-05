@@ -93,23 +93,22 @@
 ## 📸 Screenshots
 
 ### 🏠 Home Page
-![Home Page](https://via.placeholder.com/800x450/1a73e8/ffffff?text=Home+Page+-+OSTA+Job+Portal)
+![Home Page](src/homepage.png)
 
 ### 📋 Job Listings
-![Job Listings](https://via.placeholder.com/800x450/34a853/ffffff?text=Job+Listings+Page)
+![Job Listings](src/jobs.png)
 
 ### 👤 Applicant Dashboard
-![Applicant Dashboard](https://via.placeholder.com/800x450/fbbc04/000000?text=Applicant+Dashboard)
+![Applicant Dashboard](src/app.png)
 
 ### 🏢 Employer Dashboard
-![Employer Dashboard](src/homepage.png)
+![Employer Dashboard](src/emp.png)
 
 ### 🛡️ Admin Panel
-![Admin Panel](https://via.placeholder.com/800x450/9334e6/ffffff?text=Admin+Panel)
+![Admin Panel](src/admin.png)
 
 ### 📊 Analytics & Reports
-![Analytics](https://via.placeholder.com/800x450/00acc1/ffffff?text=Analytics+%26+Reports)
-
+![Analytics](src/anal.png)
 > 📸 *Replace placeholder images with actual screenshots of your deployment.*
 
 ---
