@@ -7,3 +7,13 @@ ErrorDocument 403 /osta%20job%20portal/errors/403.php
 ErrorDocument 404 /osta%20job%20portal/errors/404.php
 ErrorDocument 500 /osta%20job%20portal/errors/500.php
 
+# Front controller — route everything through public/index.php
+RewriteEngine On
+RewriteBase /osta%20job%20portal/
+
+# Don't rewrite existing files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route to front controller
+RewriteRule ^(.*)$ public/index.php [QSA,L]
