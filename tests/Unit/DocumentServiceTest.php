@@ -2,13 +2,14 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
+use App\Services\DocumentService;
 
 class DocumentServiceTest extends TestCase
 {
     protected function setUp(): void
     {
-        if (!class_exists('DocumentService')) {
-            require_once __DIR__ . '/../../services/DocumentService.php';
+        if (!class_exists('App\Services\DocumentService')) {
+            require_once __DIR__ . '/../../src/Services/DocumentService.php';
         }
     }
 

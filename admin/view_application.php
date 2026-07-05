@@ -56,7 +56,7 @@ include '../includes/header_new.php';
                     <i class="fas fa-file-alt me-2"></i>Application #<?= htmlspecialchars($application['application_number']) ?>
                 </h2>
                 <div>
-                    <a href="applications.php" class="btn btn-outline-secondary me-2">
+                    <a href="manage_interviews.php" class="btn btn-outline-secondary me-2">
                         <i class="fas fa-arrow-left me-1"></i> Back
                     </a>
                     <a href="update_application_status.php?id=<?= $application_id ?>" class="btn btn-primary">

@@ -115,7 +115,7 @@ include '../includes/header_new.php';
                 <h2 class="mb-0">
                     <i class="fas fa-tasks me-2"></i>Update Application Status
                 </h2>
-                <a href="applications.php" class="btn btn-outline-secondary">
+                <a href="manage_interviews.php" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Applications
                 </a>
             </div>
@@ -187,7 +187,7 @@ include '../includes/header_new.php';
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="applications.php" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                                <a href="manage_interviews.php" class="btn btn-outline-secondary me-md-2">Cancel</a>
                                 <button type="submit" name="update_status" class="btn btn-primary">
                                     <i class="fas fa-save me-1"></i> Update Status
                                 </button>

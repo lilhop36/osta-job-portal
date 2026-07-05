@@ -24,6 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     if ($receiverId > 0 && !empty($message)) {
         $messageModel->send($userId, $receiverId, $message);
+
+        // Notify the receiver of the new message
+        $sender_stmt = $pdo->prepare("SELECT full_name FROM users WHERE id = ?");
+        $sender_stmt->execute([$userId]);
+        $sender_name = $sender_stmt->fetchColumn() ?: 'Someone';
+
+        create_notification(
+            'New Message',
+            $sender_name . ' sent you a message.',
+            'info',
+            'user',
+            $receiverId,
+            $userId
+        );
     }
 
     header('Location: messages.php?chat=' . $receiverId);

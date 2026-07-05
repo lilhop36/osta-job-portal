@@ -2,7 +2,8 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/application_functions.php';
-require_once __DIR__ . '/../services/DocumentService.php';
+
+use App\Services\DocumentService;
 
 // Require authentication and applicant role
 require_auth('applicant');

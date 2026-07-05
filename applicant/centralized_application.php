@@ -37,9 +37,8 @@ try {
     $stmt->execute([$user_id]);
     $existing_application = $stmt->fetch();
 } catch (PDOException $e) {
-    // Table doesn't exist yet - redirect to table creation
-    header('Location: ../create_tables.php');
-    exit;
+    $error = "Database error: " . $e->getMessage();
+    $existing_application = null;
 }
 
 // Get departments for selection

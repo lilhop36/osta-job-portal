@@ -2,6 +2,7 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/functions.php';
 require_once '../includes/application_functions.php';
 
 // Require admin role
@@ -112,7 +113,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $notes,
                 $_SESSION['user_id']
             );
-            
+
+            // Notify the primary interviewer (employer) that they've been assigned
+            $interviewer_id = (int)($_POST['primary_interviewer_id'] ?? 0);
+            if ($interviewer_id > 0 && $interviewer_id !== $_SESSION['user_id']) {
+                $date = $_POST['scheduled_date'];
+                $time = $_POST['start_time'];
+                create_notification(
+                    'Interview Assigned',
+                    "You have been assigned an interview on {$date} at {$time}. Please check your schedule.",
+                    'info',
+                    'user',
+                    $interviewer_id
+                );
+            }
+
             $_SESSION['success_message'] = 'Interview scheduled successfully and applicant has been notified.';
         } catch (Exception $e) {
             $_SESSION['error_message'] = 'Error scheduling interview: ' . $e->getMessage();
@@ -490,7 +505,7 @@ if (!function_exists('page_specific_scripts')) {
             <?php if (isset($_SESSION['success_message'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php 
-                        echo $_SESSION['success_message']; 
+                        echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); 
                         unset($_SESSION['success_message']);
                     ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -500,7 +515,7 @@ if (!function_exists('page_specific_scripts')) {
             <?php if (isset($_SESSION['error_message'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <?php 
-                        echo $_SESSION['error_message']; 
+                        echo htmlspecialchars($_SESSION['error_message'], ENT_QUOTES, 'UTF-8'); 
                         unset($_SESSION['error_message']);
                     ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

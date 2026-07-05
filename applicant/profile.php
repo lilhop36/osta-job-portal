@@ -80,7 +80,7 @@ $user = $stmt->fetch();
                     </div>
                     <div class="card-body">
                         <?php if (isset($_SESSION['success_message'])): ?>
-                            <div class="alert alert-success"><?php echo $_SESSION['success_message']; ?></div>
+                            <div class="alert alert-success"><?php echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); ?></div>
                             <?php unset($_SESSION['success_message']); ?>
                         <?php endif; ?>
                         

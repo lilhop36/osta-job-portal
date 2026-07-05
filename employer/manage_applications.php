@@ -6,6 +6,7 @@ require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/security.php';
 require_once '../includes/logging.php';
+require_once '../includes/functions.php';
 
 // Require employer role
 require_role('employer', '../login.php');
@@ -27,22 +28,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $employer_id = (int)$_SESSION['user_id'];
-try {
-    $stmt = $pdo->prepare("SELECT department_id FROM users WHERE id = ? AND role = 'employer'");
-    $stmt->execute([$employer_id]);
-    $employer = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$employer || !isset($employer['department_id'])) {
-        log_security_event("Invalid employer access attempt - user_id: $employer_id");
-        header('Location: ../unauthorized.php');
-        exit();
-    }
-    
-    $department_id = (int)$employer['department_id'];
-} catch (PDOException $e) {
-    log_error("Database error fetching employer data: " . $e->getMessage());
-    $error_message = 'An error occurred while loading your information. Please try again later.';
-}
 
 // Handle application status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
@@ -75,10 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                 FROM applications a 
                 JOIN jobs j ON a.job_id = j.id 
                 JOIN users u ON a.user_id = u.id
-                WHERE a.id = ? AND j.department_id = ?
+                WHERE a.id = ? AND j.created_by = ?
                 FOR UPDATE
             ");
-            $check->execute([$application_id, $department_id]);
+            $check->execute([$application_id, $employer_id]);
             $application = $check->fetch(PDO::FETCH_ASSOC);
             
             if (!$application) {
@@ -123,6 +108,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                     // Log email failure but don't fail the entire operation
                     log_error("Failed to send status email for application $application_id: " . $e->getMessage());
                 }
+
+                // In-app notification to the applicant
+                $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                create_notification(
+                    'Application Status Updated',
+                    "Your application for \"{$application['job_title']}\" has been {$statusLabel}.",
+                    $status === 'accepted' ? 'success' : ($status === 'rejected' ? 'error' : 'info'),
+                    'user',
+                    $application['user_id'],
+                    $employer_id
+                );
             }
             
             // Commit transaction
@@ -208,12 +204,12 @@ try {
                j.department_id, d.name as department_name
         FROM applications a 
         JOIN jobs j ON a.job_id = j.id 
-        JOIN departments d ON j.department_id = d.id
+        LEFT JOIN departments d ON j.department_id = d.id
         JOIN users u ON a.user_id = u.id
-        WHERE j.department_id = :dept_id
+        WHERE j.created_by = :employer_id
     ";
     
-    $params = [':dept_id' => $department_id];
+    $params = [':employer_id' => $employer_id];
     
     // Add job filter if specified
     if ($job_id) {
@@ -229,7 +225,7 @@ try {
     
     // Log the query for audit purposes
     log_audit("Fetched applications", [
-        'department_id' => $department_id,
+        'employer_id' => $employer_id,
         'job_id' => $job_id,
         'count' => count($applications)
     ]);

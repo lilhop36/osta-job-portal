@@ -15,6 +15,12 @@
         <a href="manage_applications.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'manage_applications.php' ? 'active' : '' ?>">
             <i class="fas fa-users me-2"></i> Applications
         </a>
+        <a href="interviews.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'interviews.php' ? 'active' : '' ?>">
+            <i class="fas fa-comments me-2"></i> Interviews
+        </a>
+        <a href="messages.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'messages.php' ? 'active' : '' ?>">
+            <i class="fas fa-envelope me-2"></i> Messages
+        </a>
         <a href="profile.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : '' ?>">
             <i class="fas fa-user me-2"></i> Profile
         </a>

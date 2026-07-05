@@ -24,8 +24,14 @@
         <a href="saved_jobs.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'saved_jobs.php' ? 'active' : '' ?>">
             <i class="fas fa-bookmark me-2"></i> Saved Jobs
         </a>
+        <a href="messages.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'messages.php' ? 'active' : '' ?>">
+            <i class="fas fa-envelope me-2"></i> Messages
+        </a>
+        <a href="notifications.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'notifications.php' ? 'active' : '' ?>">
+            <i class="fas fa-bell me-2"></i> Notifications
+        </a>
         <a href="alerts.php" class="list-group-item list-group-item-action <?= basename($_SERVER['PHP_SELF']) == 'alerts.php' ? 'active' : '' ?>">
-            <i class="fas fa-bell me-2"></i> Alerts
+            <i class="fas fa-envelope me-2"></i> Job Alerts
         </a>
     </div>
 </div>

@@ -33,11 +33,8 @@ $where = ["j.status = 'approved'", "j.deadline >= CURDATE()"];
 $params = [];
 
 if (!empty($filters['keyword'])) {
-    $where[] = "(j.title LIKE ? OR j.description LIKE ? OR j.requirements LIKE ?)";
-    $kw = '%' . $filters['keyword'] . '%';
-    $params[] = $kw;
-    $params[] = $kw;
-    $params[] = $kw;
+    $where[] = "MATCH(j.title, j.description, j.requirements) AGAINST(? IN BOOLEAN MODE)";
+    $params[] = $filters['keyword'];
 }
 if (!empty($filters['type'])) {
     $where[] = "j.employment_type = ?";
@@ -50,6 +47,14 @@ if ($filters['department'] > 0) {
 if (!empty($filters['location'])) {
     $where[] = "j.location LIKE ?";
     $params[] = '%' . $filters['location'] . '%';
+}
+if ($filters['salary_min'] > 0) {
+    $where[] = "CAST(j.salary AS UNSIGNED) >= ?";
+    $params[] = $filters['salary_min'];
+}
+if ($filters['salary_max'] > 0) {
+    $where[] = "CAST(j.salary AS UNSIGNED) <= ?";
+    $params[] = $filters['salary_max'];
 }
 
 $whereClause = implode(' AND ', $where);
@@ -186,6 +191,22 @@ $pageTitle = 'Find Jobs';
                         <input type="text" name="location" class="form-control form-control-sm" 
                                placeholder="e.g. Addis Ababa"
                                value="<?php echo htmlspecialchars($filters['location']); ?>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Salary Range (ETB)</label>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <input type="number" name="salary_min" class="form-control form-control-sm" 
+                                       placeholder="Min" min="0" step="1000"
+                                       value="<?php echo $filters['salary_min'] ?: ''; ?>">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" name="salary_max" class="form-control form-control-sm" 
+                                       placeholder="Max" min="0" step="1000"
+                                       value="<?php echo $filters['salary_max'] ?: ''; ?>">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">

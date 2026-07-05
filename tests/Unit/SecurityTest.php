@@ -10,6 +10,14 @@ class SecurityTest extends TestCase
         if (!function_exists('hash_password')) {
             require_once __DIR__ . '/../../includes/security.php';
         }
+        if (!function_exists('sanitize')) {
+            function sanitize($data) {
+                if (is_array($data)) {
+                    return array_map('sanitize', $data);
+                }
+                return htmlspecialchars(trim(stripslashes($data)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+        }
     }
 
     public function testHashPasswordReturnsString(): void

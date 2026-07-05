@@ -2,6 +2,7 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/functions.php';
 
 // Require admin role
 require_role('admin', '../login.php');
@@ -31,6 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = sanitize($_POST['status']);
     
     if ($action === 'edit') {
+        // Get current job data before update (to check status change and notify employer)
+        $old_stmt = $pdo->prepare("SELECT created_by, status as old_status, title FROM jobs WHERE id = ?");
+        $old_stmt->execute([$job_id]);
+        $old_job = $old_stmt->fetch();
+
         // Update job
         $stmt = $pdo->prepare("
             UPDATE jobs 
@@ -40,6 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
         $stmt->execute([$title, $department_id, $location, $employment_type, 
                         $description, $requirements, $deadline, $status, $job_id]);
+
+        // Notify employer if status changed (approved/rejected)
+        if ($old_job && $old_job['old_status'] !== $status && !empty($old_job['created_by'])) {
+            $statusLabel = ucfirst($status);
+            $notifType = $status === 'approved' ? 'success' : ($status === 'rejected' ? 'error' : 'info');
+            create_notification(
+                'Job ' . $statusLabel,
+                'Your job "' . $old_job['title'] . '" has been ' . $status . ' by an administrator.',
+                $notifType,
+                'user',
+                $old_job['created_by']
+            );
+        }
+
         $_SESSION['success_message'] = "Job updated successfully";
     } else {
         // Create new job
@@ -161,7 +181,7 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
             <div class="col-md-9">
                 <?php if (isset($_SESSION['success_message'])): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php echo $_SESSION['success_message']; ?>
+                        <?php echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     <?php unset($_SESSION['success_message']); ?>
@@ -169,7 +189,7 @@ $departments = $pdo->query("SELECT id, name FROM departments ORDER BY name")->fe
 
                 <?php if (isset($_SESSION['error_message'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php echo $_SESSION['error_message']; ?>
+                        <?php echo htmlspecialchars($_SESSION['error_message'], ENT_QUOTES, 'UTF-8'); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     <?php unset($_SESSION['error_message']); ?>

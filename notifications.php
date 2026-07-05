@@ -199,8 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-            .then(data => {
-                if (data.success) {
                     // Update the UI
                     const notificationEl = document.getElementById(`notification-${notificationId}`);
                     if (notificationEl) {

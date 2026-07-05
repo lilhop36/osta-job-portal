@@ -20,3 +20,11 @@ fix_passwords.php
 check_*.php
 debug_*.php
 .phpunit.result.cache
+
+# Node / Playwright
+/node_modules/
+tests/reports/
+tests/e2e/test-results/
+playwright-report/
+package-lock.json
+.aider*

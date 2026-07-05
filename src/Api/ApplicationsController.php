@@ -154,14 +154,16 @@ class ApplicationsController extends ApiController
         $stmt->execute([$status, $this->currentUser['id'], $id]);
 
         // Log status change
-        $stmt = $pdo->prepare("
+        $oldStmt = $pdo->prepare("SELECT status FROM centralized_applications WHERE id = ?");
+        $oldStmt->execute([$id]);
+        $oldApp = $oldStmt->fetch(\PDO::FETCH_ASSOC);
+        $oldStatus = $oldApp ? $oldApp['status'] : 'unknown';
+
+        $auditStmt = $pdo->prepare("
             INSERT INTO application_audit_log (application_id, old_status, new_status, changed_by, notes, created_at)
             VALUES (?, ?, ?, ?, ?, NOW())
         ");
-        // Fetch old status first
-        $oldStmt = $pdo->prepare("SELECT status FROM centralized_applications WHERE id = ?");
-        $oldStmt->execute([$id]);
-        // We already know the new status, but let's get the old one from the query above
+        $auditStmt->execute([$id, $oldStatus, $status, $this->currentUser['id'], $notes]);
 
         $this->response->json(['success' => true, 'message' => "Application status updated to $status."]);
     }

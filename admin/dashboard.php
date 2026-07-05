@@ -7,11 +7,11 @@ require_auth('admin');
 $stats = [
     'total_users' => $pdo->query("SELECT COUNT(*) as count FROM users")->fetch()['count'],
     'total_jobs' => $pdo->query("SELECT COUNT(*) as count FROM jobs")->fetch()['count'],
-    'total_applications' => $pdo->query("SELECT COUNT(*) as count FROM applications")->fetch()['count'],
+    'total_applications' => $pdo->query("SELECT COUNT(*) as count FROM centralized_applications")->fetch()['count'],
     'total_departments' => $pdo->query("SELECT COUNT(*) as count FROM departments")->fetch()['count'],
     'pending_jobs' => $pdo->query("SELECT COUNT(*) as count FROM jobs WHERE status = 'pending'")->fetch()['count'],
     'pending_users' => $pdo->query("SELECT COUNT(*) as count FROM users WHERE status = 'pending'")->fetch()['count'],
-    'recent_applications' => $pdo->query("SELECT COUNT(*) as count FROM applications WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetch()['count'],
+    'recent_applications' => $pdo->query("SELECT COUNT(*) as count FROM centralized_applications WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetch()['count'],
     'total_interviews' => $pdo->query("SELECT COUNT(*) as count FROM interviews")->fetch()['count']
 ];
 

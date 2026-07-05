@@ -12,10 +12,12 @@ class Notification extends BaseModel
         return $this->fetchAll(
             "SELECT * FROM {$this->table}
              WHERE (target = 'all' 
-                 OR (target = 'user' AND target_id = ?))
+                 OR (target = 'user' AND target_id = ?)
+                 OR (target = 'department' AND target_id IN (SELECT department_id FROM users WHERE id = ?))
+                 OR (target = 'job' AND target_id IN (SELECT job_id FROM applications WHERE user_id = ?)))
              ORDER BY created_at DESC
              LIMIT ?",
-            [$userId, $limit]
+            [$userId, $userId, $userId, $limit]
         );
     }
 
@@ -23,10 +25,12 @@ class Notification extends BaseModel
     {
         $result = $this->fetchOne(
             "SELECT COUNT(*) as cnt FROM {$this->table}
-             WHERE (target = 'all' 
-                 OR (target = 'user' AND target_id = ?))
-             AND status = 'unread'",
-            [$userId]
+             WHERE status = 'unread'
+             AND (target = 'all' 
+                 OR (target = 'user' AND target_id = ?)
+                 OR (target = 'department' AND target_id IN (SELECT department_id FROM users WHERE id = ?))
+                 OR (target = 'job' AND target_id IN (SELECT job_id FROM applications WHERE user_id = ?)))",
+            [$userId, $userId, $userId]
         );
         return (int) ($result['cnt'] ?? 0);
     }
@@ -40,10 +44,13 @@ class Notification extends BaseModel
     {
         $stmt = $this->pdo->prepare(
             "UPDATE {$this->table} SET status = 'read' 
-             WHERE (target = 'all' OR (target = 'user' AND target_id = ?))
+             WHERE (target = 'all' 
+                 OR (target = 'user' AND target_id = ?)
+                 OR (target = 'department' AND target_id IN (SELECT department_id FROM users WHERE id = ?))
+                 OR (target = 'job' AND target_id IN (SELECT job_id FROM applications WHERE user_id = ?)))
              AND status = 'unread'"
         );
-        return $stmt->execute([$userId]);
+        return $stmt->execute([$userId, $userId, $userId]);
     }
 
     public function createNotification(array $data): int

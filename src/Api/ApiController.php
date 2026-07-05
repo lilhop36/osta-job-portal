@@ -28,13 +28,25 @@ abstract class ApiController
             return false;
         }
 
-        $stmt = $pdo->prepare("SELECT id, username, email, role, status FROM users WHERE api_token = ? AND status = 'active'");
+        $stmt = $pdo->prepare("SELECT id, username, email, role, status, api_token_expires FROM users WHERE api_token = ? AND status = 'active'");
         $stmt->execute([$token]);
         $this->currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$this->currentUser) {
             $this->response->unauthorized('Invalid or expired token');
             return false;
+        }
+
+        // Check if token has expired
+        if ($this->currentUser['api_token_expires'] !== null) {
+            $expiresAt = strtotime($this->currentUser['api_token_expires']);
+            if ($expiresAt !== false && $expiresAt < time()) {
+                // Clear expired token
+                $clearStmt = $pdo->prepare("UPDATE users SET api_token = NULL, api_token_expires = NULL WHERE id = ?");
+                $clearStmt->execute([$this->currentUser['id']]);
+                $this->response->unauthorized('Token has expired. Please login again.');
+                return false;
+            }
         }
 
         return true;

@@ -83,7 +83,7 @@ $alerts = $stmt->fetchAll();
             <!-- Main Content -->
             <div class="col-md-9">
                 <?php if (isset($_SESSION['success_message'])): ?>
-                    <div class="alert alert-success"><?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?></div>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['success_message']); ?></div>
                 <?php endif; ?>
 
                 <div class="card mb-4">

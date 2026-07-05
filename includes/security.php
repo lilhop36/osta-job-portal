@@ -265,28 +265,69 @@ function log_security_event($event_type, $details = '') {
  * Rate limiting for login attempts
  */
 function check_rate_limit($identifier, $max_attempts = 5, $time_window = 900) { // 15 minutes
-    $cache_key = 'rate_limit_' . md5($identifier);
+    // Use database-backed rate limiting instead of session-only
+    // Session-based rate limiting is trivially bypassed by clearing cookies
+    global $pdo;
     
-    if (!isset($_SESSION[$cache_key])) {
-        $_SESSION[$cache_key] = ['count' => 0, 'first_attempt' => time()];
-    }
-    
-    $data = $_SESSION[$cache_key];
-    
-    // Reset if time window has passed
-    if (time() - $data['first_attempt'] > $time_window) {
-        $_SESSION[$cache_key] = ['count' => 1, 'first_attempt' => time()];
+    try {
+        if (!isset($pdo)) {
+            require_once __DIR__ . '/../config/database.php';
+        }
+        
+        // Clean up expired entries
+        $pdo->exec("DELETE FROM system_logs WHERE event_type = 'rate_limit' AND created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
+        
+        // Check recent attempts from this identifier
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as attempt_count, 
+                   MIN(created_at) as first_attempt 
+            FROM system_logs 
+            WHERE event_type = 'rate_limit_attempt' 
+              AND details = ? 
+              AND created_at >= DATE_SUB(NOW(), INTERVAL ? SECOND)
+        ");
+        $stmt->execute([$identifier, $time_window]);
+        $data = $stmt->fetch();
+        
+        if ($data && $data['attempt_count'] >= $max_attempts) {
+            return false;
+        }
+        
+        // Log this attempt
+        $logStmt = $pdo->prepare("
+            INSERT INTO system_logs (user_id, event_type, details, ip_address, user_agent, created_at) 
+            VALUES (NULL, 'rate_limit_attempt', ?, ?, ?, NOW())
+        ");
+        $logStmt->execute([
+            $identifier,
+            $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ]);
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("Rate limit check failed: " . $e->getMessage());
+        // Fallback to session-based if DB fails
+        $cache_key = 'rate_limit_' . md5($identifier);
+        
+        if (!isset($_SESSION[$cache_key])) {
+            $_SESSION[$cache_key] = ['count' => 0, 'first_attempt' => time()];
+        }
+        
+        $data = $_SESSION[$cache_key];
+        
+        if (time() - $data['first_attempt'] > $time_window) {
+            $_SESSION[$cache_key] = ['count' => 1, 'first_attempt' => time()];
+            return true;
+        }
+        
+        if ($data['count'] >= $max_attempts) {
+            return false;
+        }
+        
+        $_SESSION[$cache_key]['count']++;
         return true;
     }
-    
-    // Check if limit exceeded
-    if ($data['count'] >= $max_attempts) {
-        return false;
-    }
-    
-    // Increment counter
-    $_SESSION[$cache_key]['count']++;
-    return true;
 }
 
 /**
@@ -321,5 +362,4 @@ function hash_password($password) {
 function verify_password($password, $hash) {
     return password_verify($password, $hash);
 }
-
 

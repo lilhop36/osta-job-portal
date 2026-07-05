@@ -220,7 +220,7 @@ $stats = [
                 <?php if (isset($_SESSION['error_message'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
                         <?php 
-                        echo $_SESSION['error_message'];
+                        echo htmlspecialchars($_SESSION['error_message'], ENT_QUOTES, 'UTF-8');
                         unset($_SESSION['error_message']);
                         ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

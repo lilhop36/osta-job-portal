@@ -53,6 +53,18 @@ try {
     
     // Log the application
     log_debug("User {$user_id} applied to job {$job_id} - Application ID: {$application_id}");
+
+    // Notify the employer that someone applied
+    if (!empty($job['created_by'])) {
+        create_notification(
+            'New Job Application',
+            'Someone has applied to your job: ' . $job['title'],
+            'info',
+            'user',
+            $job['created_by'],
+            $user_id
+        );
+    }
     
     $_SESSION['success_message'] = "Successfully applied to '{$job['title']}' at {$job['department_name']}!";
     

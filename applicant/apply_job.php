@@ -3,6 +3,7 @@ session_start();
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/functions.php';
 require_once '../includes/application_functions.php';
 
 // Require authentication and applicant role
@@ -80,6 +81,18 @@ if ($_POST && isset($_POST['csrf_token']) && verify_csrf_token($_POST['csrf_toke
             'job_title' => $job['title'],
             'application_id' => $new_application_id
         ]);
+        
+        // Notify the employer that someone applied
+        if (!empty($job['created_by'])) {
+            create_notification(
+                'New Job Application',
+                'Someone has applied to your job: ' . $job['title'],
+                'info',
+                'user',
+                $job['created_by'],
+                $user_id
+            );
+        }
         
         $pdo->commit();
         

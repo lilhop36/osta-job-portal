@@ -58,7 +58,6 @@ if (!function_exists('log_debug')) {
 }
 
 // sanitize() is defined in config/database.php (canonical version with array support)
-}
 
 // Only define format_date if it doesn't already exist
 if (!function_exists('format_date')) {
@@ -202,5 +201,47 @@ if (!function_exists('slugify')) {
         $string = trim($string, '-');
         
         return $string;
+    }
+}
+
+if (!function_exists('create_notification')) {
+    /**
+     * Create an in-app notification.
+     *
+     * @param string  $title      Notification headline
+     * @param string  $message    Notification body
+     * @param string  $type       info|warning|success|error
+     * @param string  $target     all|user|department|job
+     * @param int|string|null $targetId  User ID, dept ID, or job ID depending on target
+     * @param int|null $createdBy  Who triggered this (defaults to current session user)
+     * @return int|false  The new notification ID or false on failure
+     */
+    function create_notification(
+        string $title,
+        string $message,
+        string $type = 'info',
+        string $target = 'all',
+        $targetId = null,
+        ?int $createdBy = null
+    ) {
+        global $pdo;
+
+        if ($createdBy === null) {
+            $createdBy = $_SESSION['user_id'] ?? 1;
+        }
+
+        $stmt = $pdo->prepare("
+            INSERT INTO notifications (title, message, type, target, target_id, created_by, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'unread', NOW())
+        ");
+
+        return $stmt->execute([
+            $title,
+            $message,
+            $type,
+            $target,
+            $targetId !== null ? (string)$targetId : null,
+            $createdBy,
+        ]) ? $pdo->lastInsertId() : false;
     }
 }

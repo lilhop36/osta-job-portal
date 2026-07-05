@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../includes/security.php';
-require_once __DIR__ . '/../services/DocumentService.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Services\DocumentService;
 
 $failures = [];
 

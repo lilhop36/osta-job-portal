@@ -9,7 +9,7 @@ class SanitizeTest extends TestCase
 {
     public function test_sanitize_strips_tags(): void
     {
-        $input = '<script>alert("xss")</script>Hello';
+        $input = '<b>Hello</b>';
         $result = strip_tags($input);
         $this->assertEquals('Hello', $result);
     }

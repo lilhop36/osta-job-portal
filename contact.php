@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endif; ?>
                         <?php if (isset($_SESSION['success_message'])): ?>
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <?php echo $_SESSION['success_message']; ?>
+                                <?php echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                             <?php unset($_SESSION['success_message']); ?>

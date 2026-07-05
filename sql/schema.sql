@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS companies (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS jobs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    department_id INT UNSIGNED NOT NULL,
+    department_id INT UNSIGNED,
     company_id INT UNSIGNED,
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,

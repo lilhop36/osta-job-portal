@@ -54,13 +54,43 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'User';
             
             <ul class="navbar-nav ms-auto">
                 <?php if ($is_logged_in): ?>
+                    <?php
+                    // Get unread notification count for the bell badge
+                    $notif_count = 0;
+                    if (isset($pdo) && isset($_SESSION['user_id'])) {
+                        try {
+                            $nc_stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications 
+                                WHERE status = 'unread' 
+                                AND (target = 'all' 
+                                    OR (target = 'user' AND target_id = ?)
+                                    OR (target = 'department' AND target_id IN (SELECT department_id FROM users WHERE id = ?))
+                                    OR (target = 'job' AND target_id IN (SELECT job_id FROM applications WHERE user_id = ?)))");
+                            $nc_stmt->execute([$_SESSION['user_id'], $_SESSION['user_id'], $_SESSION['user_id']]);
+                            $notif_count = (int)$nc_stmt->fetchColumn();
+                        } catch (Exception $e) {
+                            $notif_count = 0;
+                        }
+                    }
+                    ?>
+                    <li class="nav-item me-2">
+                        <a class="nav-link position-relative px-2" href="<?php echo SITE_URL; ?>/<?php echo $role; ?>/notifications.php" title="Notifications">
+                            <i class="fas fa-bell fa-lg"></i>
+                            <?php if ($notif_count > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                    <?php echo $notif_count > 99 ? '99+' : $notif_count; ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center px-3" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($username); ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/<?php echo $role; ?>/dashboard.php"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <?php if ($role !== 'admin'): ?>
                             <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/<?php echo $role; ?>/profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="<?php echo SITE_URL; ?>/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>

@@ -2,6 +2,7 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/security.php';
+require_once '../includes/functions.php';
 
 // Require employer role
 require_role('employer', '../login.php');
@@ -9,10 +10,9 @@ require_role('employer', '../login.php');
 // Set security headers
 set_security_headers();
 
-// Get user's department
-$stmt = $pdo->prepare("SELECT department_id FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
+// Get departments for dropdown
+$departments_stmt = $pdo->query("SELECT id, name FROM departments ORDER BY name");
+$departments = $departments_stmt->fetchAll();
 
 // Handle job posting
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,19 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Invalid CSRF token. Please try again.";
     } else {
         // Sanitize inputs
-        $title = sanitize(isset($_POST['title']) ? $_POST['title'] : '');
-        $description = sanitize(isset($_POST['description']) ? $_POST['description'] : '');
-        $requirements = sanitize(isset($_POST['requirements']) ? $_POST['requirements'] : '');
-        $responsibilities = sanitize(isset($_POST['responsibilities']) ? $_POST['responsibilities'] : '');
-        $deadline = sanitize(isset($_POST['deadline']) ? $_POST['deadline'] : '');
+        $title = sanitize($_POST['title'] ?? '');
+        $description = sanitize($_POST['description'] ?? '');
+        $requirements = sanitize($_POST['requirements'] ?? '');
+        $responsibilities = sanitize($_POST['responsibilities'] ?? '');
+        $deadline = sanitize($_POST['deadline'] ?? '');
         $salary = sanitize($_POST['salary'] ?? '');
         $location = sanitize($_POST['location'] ?? '');
         $employment_type = sanitize($_POST['employment_type'] ?? '');
+        $department_id = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
         
         // Validate inputs
         $errors = [];
         
-        // Required fields validation
         if (empty($title)) $errors[] = "Job title is required";
         if (empty($description)) $errors[] = "Job description is required";
         if (empty($requirements)) $errors[] = "Job requirements are required";
@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($location)) $errors[] = "Job location is required";
         if (empty($employment_type)) $errors[] = "Employment type is required";
         
-        // Date validation
         if (!empty($deadline) && strtotime($deadline) < time()) {
             $errors[] = "Deadline must be in the future";
         }
@@ -49,10 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($errors)) {
         try {
-            // Start transaction
             $pdo->beginTransaction();
             
-            // Insert job
             $stmt = $pdo->prepare("INSERT INTO jobs (
                 title, description, requirements, responsibilities, 
                 deadline, salary, location, employment_type, 
@@ -62,21 +59,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([
                 $title, $description, $requirements, $responsibilities,
                 $deadline, $salary, $location, $employment_type,
-                $user['department_id'], $_SESSION['user_id']
+                $department_id, $_SESSION['user_id']
             ]);
             
             $job_id = $pdo->lastInsertId();
             
-            // Create uploads directory if it doesn't exist
             $upload_dir = "../uploads/job_attachments/";
             if (!file_exists($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
             
-            // Handle attachments if any
             if (isset($_FILES['attachments']) && !empty($_FILES['attachments']['name'][0])) {
                 $allowed_types = ['pdf', 'doc', 'docx'];
-                $max_size = 5 * 1024 * 1024; // 5MB
+                $max_size = 5 * 1024 * 1024;
                 
                 foreach ($_FILES['attachments']['name'] as $key => $name) {
                     if ($_FILES['attachments']['error'][$key] === UPLOAD_ERR_OK) {
@@ -103,20 +98,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $errors[] = "Failed to upload file '{$name}'";
                         }
                     } elseif ($_FILES['attachments']['error'][$key] !== UPLOAD_ERR_NO_FILE) {
-                        $errors[] = "Error uploading file '{$name}': " . get_upload_error_message($_FILES['attachments']['error'][$key]);
+                        $errors[] = "Error uploading file '{$name}'";
                     }
                 }
             }
         
             if (empty($errors)) {
                 $pdo->commit();
+
+                // Notify all admins that a new job is pending approval
+                $admin_stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
+                $admin_stmt->execute();
+                while ($admin = $admin_stmt->fetch()) {
+                    create_notification(
+                        'New Job Pending Approval',
+                        'A new job "' . $title . '" has been submitted and is waiting for your approval.',
+                        'warning',
+                        'user',
+                        $admin['id'],
+                        $_SESSION['user_id']
+                    );
+                }
+
                 $_SESSION['success_message'] = "Job posted successfully. Waiting for admin approval.";
                 header('Location: dashboard.php');
                 exit();
             } else {
-                // If there were file upload errors, rollback the transaction
                 $pdo->rollBack();
-                // Delete any uploaded files if transaction fails
                 if (isset($target_file) && file_exists($target_file)) {
                     unlink($target_file);
                 }
@@ -124,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             $pdo->rollBack();
             $errors[] = "An error occurred while posting the job: " . $e->getMessage();
-            // Log the error
             error_log("Job posting error: " . $e->getMessage());
         }
     }
@@ -133,104 +140,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php include '../includes/header.php'; ?>
 
-    <div class="container mt-4">
+    <div class="container-fluid mt-4">
         <div class="row">
-            <!-- Sidebar -->
             <div class="col-md-3">
                 <?php include __DIR__ . '/../includes/employer_sidebar.php'; ?>
             </div>
 
-            <!-- Main Content -->
-            <!-- Job Posting Form -->
             <div class="col-md-9">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="mb-0">Post New Job</h3>
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0"><i class="fas fa-plus-circle me-2 text-primary"></i>Post New Job</h4>
                     </div>
                     <div class="card-body">
-                            <?php if (isset($_SESSION['success_message'])): ?>
-                                <div class="alert alert-success">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    <?php echo $_SESSION['success_message']; ?>
-                                </div>
-                                <?php unset($_SESSION['success_message']); ?>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($errors)): ?>
-                                <div class="alert alert-danger">
-                                    <h5 class="alert-heading">Please fix the following errors:</h5>
-                                    <ul class="mb-0">
-                                        <?php foreach ($errors as $error): ?>
-                                            <li><?php echo htmlspecialchars($error); ?></li>
-                                        <?php endforeach; ?>
-                                    </ul>
-                                </div>
-                            <?php endif; ?>
+                        <?php if (isset($_SESSION['success_message'])): ?>
+                            <div class="alert alert-success alert-dismissible fade show">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <?php echo htmlspecialchars($_SESSION['success_message'], ENT_QUOTES, 'UTF-8'); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            <?php unset($_SESSION['success_message']); ?>
+                        <?php endif; ?>
                         
+                        <?php if (!empty($errors)): ?>
+                            <div class="alert alert-danger alert-dismissible fade show">
+                                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h5>
+                                <ul class="mb-0">
+                                    <?php foreach ($errors as $error): ?>
+                                        <li><?php echo htmlspecialchars($error); ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+                    
                         <form method="POST" action="" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                            
                             <div class="mb-3">
-                                <label for="title" class="form-label">Job Title *</label>
-                                <input type="text" class="form-control" id="title" name="title" required>
+                                <label for="title" class="form-label fw-bold">Job Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="<?php echo htmlspecialchars($title ?? ''); ?>" required>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="description" class="form-label">Job Description *</label>
-                                <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                                <label for="description" class="form-label fw-bold">Job Description *</label>
+                                <textarea class="form-control" id="description" name="description" rows="5" required><?php echo htmlspecialchars($description ?? ''); ?></textarea>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="requirements" class="form-label">Requirements *</label>
+                                <label for="requirements" class="form-label fw-bold">Requirements *</label>
                                 <textarea class="form-control" id="requirements" name="requirements" rows="5" 
-                                          placeholder="List each requirement on a new line" required></textarea>
+                                          placeholder="List each requirement on a new line" required><?php echo htmlspecialchars($requirements ?? ''); ?></textarea>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="responsibilities" class="form-label">Responsibilities *</label>
+                                <label for="responsibilities" class="form-label fw-bold">Responsibilities *</label>
                                 <textarea class="form-control" id="responsibilities" name="responsibilities" rows="5" 
-                                          placeholder="List each responsibility on a new line" required></textarea>
+                                          placeholder="List each responsibility on a new line" required><?php echo htmlspecialchars($responsibilities ?? ''); ?></textarea>
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="deadline" class="form-label">Application Deadline *</label>
-                                    <input type="date" class="form-control" id="deadline" name="deadline" 
-                                           min="<?php echo date('Y-m-d'); ?>" required>
+                                    <label for="department_id" class="form-label fw-bold">Department</label>
+                                    <select class="form-select" id="department_id" name="department_id">
+                                        <option value="">Select Department (Optional)</option>
+                                        <?php foreach ($departments as $dept): ?>
+                                            <option value="<?php echo $dept['id']; ?>" <?php echo (($department_id ?? '') == $dept['id']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($dept['name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="salary" class="form-label">Salary Range</label>
-                                    <input type="text" class="form-control" id="salary" name="salary" 
-                                           placeholder="e.g., 50,000 - 100,000 ETB">
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="location" class="form-label">Location *</label>
-                                    <input type="text" class="form-control" id="location" name="location" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="employment_type" class="form-label">Employment Type *</label>
-                                    <select class="form-control" id="employment_type" name="employment_type" required>
-                                        <option value="">Select Employment Type</option>
-                                        <option value="full_time">Full Time</option>
-                                        <option value="part_time">Part Time</option>
-                                        <option value="contract">Contract</option>
-                                        <option value="internship">Internship</option>
+                                    <label for="employment_type" class="form-label fw-bold">Employment Type *</label>
+                                    <select class="form-select" id="employment_type" name="employment_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="full_time" <?php echo (($employment_type ?? '') === 'full_time') ? 'selected' : ''; ?>>Full Time</option>
+                                        <option value="part_time" <?php echo (($employment_type ?? '') === 'part_time') ? 'selected' : ''; ?>>Part Time</option>
+                                        <option value="contract" <?php echo (($employment_type ?? '') === 'contract') ? 'selected' : ''; ?>>Contract</option>
+                                        <option value="internship" <?php echo (($employment_type ?? '') === 'internship') ? 'selected' : ''; ?>>Internship</option>
                                     </select>
                                 </div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="attachments" class="form-label">Job Attachments (Optional)</label>
-                                <input type="file" class="form-control" id="attachments" name="attachments[]" 
-                                       accept=".pdf,.doc,.docx" multiple>
-                                <div class="form-text">You can upload job description documents, requirement specifications, etc.</div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="location" class="form-label fw-bold">Location *</label>
+                                    <input type="text" class="form-control" id="location" name="location" 
+                                           value="<?php echo htmlspecialchars($location ?? ''); ?>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="salary" class="form-label fw-bold">Salary Range</label>
+                                    <input type="text" class="form-control" id="salary" name="salary" 
+                                           value="<?php echo htmlspecialchars($salary ?? ''); ?>"
+                                           placeholder="e.g., 15,000 - 25,000 ETB">
+                                </div>
                             </div>
                             
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                                <a href="dashboard.php" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                                <button type="submit" class="btn btn-primary">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="deadline" class="form-label fw-bold">Application Deadline *</label>
+                                    <input type="date" class="form-control" id="deadline" name="deadline" 
+                                           value="<?php echo htmlspecialchars($deadline ?? ''); ?>"
+                                           min="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="attachments" class="form-label fw-bold">Attachments (Optional)</label>
+                                    <input type="file" class="form-control" id="attachments" name="attachments[]" 
+                                           accept=".pdf,.doc,.docx" multiple>
+                                    <div class="form-text">PDF, DOC, DOCX — max 5MB each</div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <a href="dashboard.php" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
                                     <i class="fas fa-paper-plane me-1"></i> Post Job
                                 </button>
                             </div>
@@ -241,5 +267,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php include '../includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>
 <?php prevent_back_navigation(); ?>

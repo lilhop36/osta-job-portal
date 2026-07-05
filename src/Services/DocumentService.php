@@ -15,19 +15,19 @@ class DocumentService
         return self::$instance;
     }
 
-    public function isAllowedExtension(string $filename, array $allowedExtensions): bool
+    public static function isAllowedExtension(string $filename, array $allowedExtensions): bool
     {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         return in_array($extension, $allowedExtensions, true);
     }
 
-    public function buildStoredFilename(string $prefix, string $extension): string
+    public static function buildStoredFilename(string $prefix, string $extension): string
     {
         $safePrefix = preg_replace('/[^A-Za-z0-9_-]/', '_', $prefix) ?: 'document';
         return $safePrefix . '_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . strtolower($extension);
     }
 
-    public function getFileSizeHuman(int $bytes): string
+    public static function getFileSizeHuman(int $bytes): string
     {
         $units = ['B', 'KB', 'MB', 'GB'];
         $i = 0;
@@ -38,7 +38,7 @@ class DocumentService
         return round($bytes, 2) . ' ' . $units[$i];
     }
 
-    public function isAllowedMimeType(string $mimeType, array $allowedTypes): bool
+    public static function isAllowedMimeType(string $mimeType, array $allowedTypes): bool
     {
         return in_array($mimeType, $allowedTypes, true);
     }
