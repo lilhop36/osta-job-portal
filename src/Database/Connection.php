@@ -14,11 +14,36 @@ class Connection
 
     private function __construct()
     {
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $name = $_ENV['DB_NAME'] ?? 'osta_job_portal';
-        $user = $_ENV['DB_USER'] ?? 'root';
-        $pass = $_ENV['DB_PASS'] ?? '';
+        $host = $_ENV['DB_HOST'] ?? $_ENV['MYSQL_HOST'] ?? $_ENV['MYSQL_URL'] ?? 'localhost';
+        $name = $_ENV['DB_NAME'] ?? $_ENV['MYSQL_DATABASE'] ?? 'osta_job_portal';
+        $user = $_ENV['DB_USER'] ?? $_ENV['MYSQL_USER'] ?? 'root';
+        $pass = $_ENV['DB_PASS'] ?? $_ENV['MYSQL_PASSWORD'] ?? '';
+        $port = $_ENV['DB_PORT'] ?? $_ENV['MYSQL_PORT'] ?? '3306';
         $appEnv = $_ENV['APP_ENV'] ?? 'development';
+
+        // Parse DATABASE_URL if present (Railway provides this for some DB addons)
+        $dbUrl = $_ENV['DATABASE_URL'] ?? '';
+        if ($dbUrl !== '') {
+            $parsed = parse_url($dbUrl);
+            if ($parsed !== false && isset($parsed['host'])) {
+                $host = $parsed['host'];
+                $user = $parsed['user'] ?? $user;
+                $pass = $parsed['pass'] ?? $pass;
+                $port = $parsed['port'] ?? $port;
+                if (isset($parsed['path'])) {
+                    $name = ltrim($parsed['path'], '/');
+                }
+            }
+        }
+
+        // Strip port from host if embedded (e.g., "mysql://host:port")
+        if (str_contains($host, '://')) {
+            $parsed = parse_url($host);
+            if ($parsed !== false && isset($parsed['host'])) {
+                $host = $parsed['host'];
+                $port = $parsed['port'] ?? $port;
+            }
+        }
 
         if ($appEnv === 'production') {
             ini_set('display_errors', '0');
@@ -31,7 +56,7 @@ class Connection
 
         try {
             $this->pdo = new PDO(
-                "mysql:host={$host};dbname={$name};charset=utf8mb4",
+                "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
                 $user,
                 $pass,
                 [

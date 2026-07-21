@@ -3,13 +3,12 @@
     Header set Content-Security-Policy "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com data:; connect-src *;"
 </IfModule>
 
-ErrorDocument 403 /osta%20job%20portal/errors/403.php
-ErrorDocument 404 /osta%20job%20portal/errors/404.php
-ErrorDocument 500 /osta%20job%20portal/errors/500.php
+ErrorDocument 403 /errors/403.php
+ErrorDocument 404 /errors/404.php
+ErrorDocument 500 /errors/500.php
 
 # Front controller — route everything through public/index.php
 RewriteEngine On
-RewriteBase /osta%20job%20portal/
 
 # Don't rewrite existing files or directories
 RewriteCond %{REQUEST_FILENAME} !-f

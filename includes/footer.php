@@ -3,9 +3,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 $current_path = $_SERVER['PHP_SELF'] ?? '';
-$is_dashboard = str_starts_with($current_path, '/osta%20job%20portal/admin/')
-              || str_starts_with($current_path, '/osta%20job%20portal/employer/')
-              || str_starts_with($current_path, '/osta%20job%20portal/applicant/');
+$base_path = app_base_path();
+$is_dashboard = str_starts_with($current_path, $base_path . '/admin/')
+              || str_starts_with($current_path, $base_path . '/employer/')
+              || str_starts_with($current_path, $base_path . '/applicant/');
 if ($is_dashboard) {
     ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

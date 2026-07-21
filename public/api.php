@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../includes/security.php';
 
 use App\Http\Request;
@@ -28,13 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $method = $request->method();
 $uri = $request->uri();
 
-// Strip base path and /api prefix (handle both /api and /public/api)
-$basePrefixes = ['/osta%20job%20portal/public', '/osta job portal/public', '/osta%20job%20portal', '/osta job portal'];
-foreach ($basePrefixes as $prefix) {
-    if (strpos($uri, $prefix) === 0) {
-        $uri = substr($uri, strlen($prefix));
-        break;
-    }
+// Strip base path from SITE_URL
+$basePath = app_base_path();
+if ($basePath !== '' && strpos($uri, $basePath) === 0) {
+    $uri = substr($uri, strlen($basePath));
 }
 $path = preg_replace('#^/api#', '', $uri);
 $path = '/' . trim($path, '/');
