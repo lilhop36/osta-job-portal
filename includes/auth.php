@@ -52,9 +52,6 @@ function redirect_to_dashboard() {
     }
     
     $base_path = app_base_path();
-    if ($base_path === '') {
-        $base_path = '/osta%20job%20portal';
-    }
     $role = $_SESSION['role'];
     
     switch ($role) {

@@ -16,11 +16,16 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
 $decodedUri = urldecode($uri);
 
+// Strip base path from SITE_URL to get clean route
+$basePath = app_base_path();
+if ($basePath !== '' && strpos($uri, $basePath) === 0) {
+    $uri = substr($uri, strlen($basePath)) ?: '/';
+}
+
 // ============================================================
 // API route — serve public/api.php directly
 // ============================================================
-if (strpos($uri, '/osta%20job%20portal/api') === 0 || strpos($uri, '/osta job portal/api') === 0 ||
-    strpos($uri, '/osta%20job%20portal/public/api') === 0 || strpos($uri, '/osta job portal/public/api') === 0) {
+if (strpos($uri, '/api') === 0) {
     require __DIR__ . '/api.php';
     exit;
 }
